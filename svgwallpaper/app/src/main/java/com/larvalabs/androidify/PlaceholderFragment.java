@@ -2,6 +2,8 @@ package com.larvalabs.androidify;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -13,33 +15,92 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+
+import com.larvalabs.androidify.wallpaper.AndroidDrawer;
+import com.larvalabs.androidify.wallpaper.AssetDatabase;
+import com.larvalabs.androidify.wallpaper.R;
+
+import java.util.Random;
 
 public class PlaceholderFragment extends Fragment {
 
     private final String mySound = "my_recorded_sound";
     private AndroidSoundRecorder soundRecorder;
     private AndroidSoundPlayer soundPlayer;
+    private AssetDatabase assetDatabase;
+    private AndroidDrawer android;
+    private AndroidDrawer nextAndroid;
+    private long sceneTime;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        final ViewPager viewPagerHead = (ViewPager) rootView.findViewById(R.id.viewPagerHead);
-        final ViewPager viewPagerBody = (ViewPager) rootView.findViewById(R.id.viewPagerBody);
-        final ViewPager viewPagerLegs = (ViewPager) rootView.findViewById(R.id.viewPagerLegs);
+        final ViewPager viewPagerHair = (ViewPager) rootView.findViewById(R.id.viewPagerHair);
+        final ViewPager viewPagerGlass = (ViewPager) rootView.findViewById(R.id.viewPagerGlass);
+        final ViewPager viewPagerBeard = (ViewPager) rootView.findViewById(R.id.viewPagerBeard);
+        //final ViewPager viewPagerAccessory = (ViewPager) rootView.findViewById(R.id.viewPagerAccessory);
+        final ViewPager viewPagerShirt = (ViewPager) rootView.findViewById(R.id.viewPagerShirt);
+        final ViewPager viewPagerPants = (ViewPager) rootView.findViewById(R.id.viewPagerPants);
+        final ViewPager viewPagerShoes = (ViewPager) rootView.findViewById(R.id.viewPagerShoes);
 
         FragmentManager fm = getActivity().getSupportFragmentManager();
-        viewPagerHead.setAdapter(new AndroidifyViewPagerAdapter(fm, AndroidDrawables.getHeads()));
-        viewPagerBody.setAdapter(new AndroidifyViewPagerAdapter(fm, AndroidDrawables.getBodies()));
-        viewPagerLegs.setAdapter(new AndroidifyViewPagerAdapter(fm, AndroidDrawables.getLegs()));
+        assetDatabase = new AssetDatabase(getActivity().getAssets(),getActivity().getResources());
+        viewPagerHair.setAdapter(new SvgAssetsAdapter(fm, assetDatabase, "hair", "back"));
+        viewPagerHair.setCurrentItem(1);
+        viewPagerGlass.setAdapter(new SvgAssetsAdapter(fm, assetDatabase, "glasses", null));
+        viewPagerGlass.setCurrentItem(1);
+        viewPagerBeard.setAdapter(new SvgAssetsAdapter(fm, assetDatabase, "beard", null));
+        viewPagerBeard.setCurrentItem(1);
+        //viewPagerAccessory.setAdapter(new SvgAssetsAdapter(fm, db, "accessories", "head"));
+        viewPagerShirt.setAdapter(new SvgAssetsAdapter(fm, assetDatabase, "shirt", "body"));
+        viewPagerShirt.setCurrentItem(1);
+        viewPagerPants.setAdapter(new SvgAssetsAdapter(fm, assetDatabase, "pants", "leg"));
+        viewPagerPants.setCurrentItem(1);
 
-        initShareButton(rootView, viewPagerHead, viewPagerBody, viewPagerLegs);
+        viewPagerShoes.setAdapter(new SvgAssetsAdapter(fm, assetDatabase, "shoes", null));
+        viewPagerShoes.setCurrentItem(1);
+
+        initShareButton(rootView, viewPagerHair, viewPagerBeard, viewPagerGlass);
         initPlayButton(rootView);
         initRecordButton(rootView);
 
-        return rootView;
+        //setTouchEventsEnabled(true);
+        //this.assetDatabase = new AssetDatabase(getAssets(), getResources());
+        android = new AndroidDrawer(this.assetDatabase);
+        nextAndroid = new AndroidDrawer(this.assetDatabase);
+        // First android
+        android.setAndroidConfig(assetDatabase.getRandomConfig(), this.assetDatabase);
+        android.setBackgroundColor(getNextColor());
+        // Set initial zoom
+        //android.setZoom(createRandomZoomInfo());
+        sceneTime = System.currentTimeMillis();
+        Bitmap bitmap = Bitmap.createBitmap(500, 500, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        //canvas.scale(4, 2, 0, 0);
+        android.draw(canvas);
+        ImageView view = new ImageView(getActivity());
+        view.setImageBitmap(bitmap);
+        return view;
+        //return rootView;
     }
+    private static final Random RANDOM = new Random();
+    /**
+     * The set of background colors
+     */
+    private static final int[] COLORS =
+            {
+                    0x59c0ce,
+                    0xe684a9,
+                    0xfef48b,
+                    0x9dcb7a,
+                    0xd65143,
+            };
+    private int getNextColor() {
 
+        return COLORS[RANDOM.nextInt(COLORS.length)];
+    }
     private void initPlayButton(View rootView) {
         soundPlayer = new AndroidSoundPlayer(mySound);
 
@@ -89,8 +150,9 @@ public class PlaceholderFragment extends Fragment {
                 Integer head = AndroidDrawables.getHeads().get(viewPagerHead.getCurrentItem());
                 Integer body = AndroidDrawables.getBodies().get(viewPagerBody.getCurrentItem());
                 Integer legs = AndroidDrawables.getLegs().get(viewPagerLegs.getCurrentItem());
-
-                Bitmap bitmap = BitmapUtils.combineDrawables(getResources(), head, body, legs);
+                assetDatabase = new AssetDatabase(getActivity().getAssets(), getActivity().getResources());
+                Bitmap bitmap = BitmapUtils.combineParts(assetDatabase);
+                //Drawables(getResources(), head, body, legs);
 
                 String imagePath = MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), bitmap, "Android Avatar", null);
                 Uri imageURI = Uri.parse(imagePath);

@@ -1,6 +1,8 @@
 package com.larvalabs.androidify;
 
 
+import com.larvalabs.androidify.wallpaper.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
