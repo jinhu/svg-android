@@ -1,5 +1,8 @@
 package com.larvalabs.androidify;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.PictureDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -7,11 +10,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.larvalabs.androidify.wallpaper.R;
+import com.larvalabs.svgandroid.SVG;
+
 public class AndroidifyViewPagerItemFragment extends Fragment {
 
     public static final String IMG_ID = "IMG_ID";
 
     private int imgId;
+    private String mImageSource;
+    private SVG mSvg;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -22,9 +30,11 @@ public class AndroidifyViewPagerItemFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.androidify_part, container, false);
         ImageView imageView = (ImageView) rootView.findViewById(R.id.android_part);
         imageView.setImageResource(imgId);
+        if(mSvg!=null) {
+            imageView.setImageBitmap(mSvg.createBitmap());
+        }
         return rootView;
     }
-
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt(IMG_ID, imgId);
@@ -32,5 +42,13 @@ public class AndroidifyViewPagerItemFragment extends Fragment {
 
     public void setImgId(int imgId) {
         this.imgId = imgId;
+    }
+
+    public void setImgSrc(String anImageSource) {
+        mImageSource = anImageSource;
+    }
+
+    public void setSvg(SVG aSvg) {
+        mSvg = aSvg;
     }
 }

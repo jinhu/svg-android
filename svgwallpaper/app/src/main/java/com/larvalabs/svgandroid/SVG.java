@@ -1,6 +1,9 @@
 package com.larvalabs.svgandroid;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Picture;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.PictureDrawable;
 
@@ -92,6 +95,15 @@ public class SVG {
 //                }
 //            }
 //        };
+    }
+    public Bitmap createBitmap() {
+        PictureDrawable pd = new PictureDrawable(picture);
+        Bitmap bitmap = Bitmap.createBitmap(pd.getIntrinsicWidth(), pd.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        //canvas.scale(4, 2, 0, 0);
+
+        canvas.drawPicture(pd.getPicture());
+        return bitmap;
     }
 
     /**

@@ -10,50 +10,61 @@
     android:weightSum="130"
     tools:context="com.larvalabs.androidify.PlaceholderFragment">
 
-    <TextView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="10"
-        android:layout_marginBottom="5dp"
-        android:text="@string/create_your_android"
-        android:gravity="center"
-        android:textSize="@dimen/heading5" />
+        android:layout_height="424dp"
+        android:layout_gravity="center_horizontal"
+        >
 
-    <LinearLayout
-        android:layout_weight="90"
+    <!--LinearLayout
+        android:layout_weight="110.84"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:padding="1dp"
         android:orientation="vertical"
-        android:background="@drawable/border">
+        android:background="@drawable/border"-->
 
         <android.support.v4.view.ViewPager
-            android:id="@+id/viewPagerHead"
+            android:id="@+id/viewPagerHair"
             android:layout_weight="30"
             android:layout_width="match_parent"
-            android:layout_height="0dp" />
+            android:layout_height="match_parent" />
 
         <android.support.v4.view.ViewPager
-            android:id="@+id/viewPagerBody"
+            android:id="@+id/viewPagerGlass"
             android:layout_weight="30"
             android:layout_width="match_parent"
-            android:layout_height="0dp" />
-
+            android:layout_height="match_parent" />
         <android.support.v4.view.ViewPager
-            android:id="@+id/viewPagerLegs"
-            android:layout_weight="30"
-            android:layout_width="match_parent"
-            android:layout_height="0dp" />
-    </LinearLayout>
-
-    <TextView
+        android:id="@+id/viewPagerBeard"
+        android:layout_weight="30"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="10"
-        android:text="GDG Riga 2014"
-        android:gravity="center"
-        android:layout_marginBottom="5dp"
-        android:textSize="@dimen/heading5" />
+        android:layout_height="match_parent" />
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/viewPagerShirt"
+            android:layout_weight="30"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/viewPagerAccessory"
+            android:layout_weight="30"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/viewPagerPants"
+            android:layout_weight="30"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <android.support.v4.view.ViewPager
+            android:id="@+id/viewPagerShoes"
+            android:layout_weight="30"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    <!--/LinearLayout-->
+    </FrameLayout>
 
 
     <LinearLayout
@@ -64,18 +75,10 @@
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_weight="3.20"
             android:gravity="center"
-            android:layout_height="wrap_content">
+            android:layout_height="72dp">
 
-            <ImageButton
-                android:id="@+id/button_share"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:src="@drawable/android_icon"
-                android:background="@null"
-                android:adjustViewBounds="true"
-                android:scaleType="centerInside" />
         </LinearLayout>
 
         <LinearLayout
@@ -110,5 +113,14 @@
                 android:scaleType="centerInside" />
         </LinearLayout>
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/button_share"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/android_icon"
+        android:background="@null"
+        android:adjustViewBounds="true"
+        android:scaleType="centerInside" />
 
 </LinearLayout>
