@@ -2,18 +2,14 @@ package com.larvalabs.androidify;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
 import android.widget.ImageView;
 
 import com.larvalabs.androidify.wallpaper.AndroidAnimation;
@@ -24,12 +20,6 @@ import com.larvalabs.androidify.wallpaper.R;
 import com.larvalabs.androidify.wallpaper.ZoomInfo;
 
 import java.util.Random;
-
-import static com.larvalabs.androidify.wallpaper.Constants.CENTER_X;
-import static com.larvalabs.androidify.wallpaper.Constants.EYE_HEIGHT;
-import static com.larvalabs.androidify.wallpaper.Constants.POINT_LEFT_EYE;
-import static com.larvalabs.androidify.wallpaper.Constants.POINT_TOP_OF_LEFT_EYE;
-import static com.larvalabs.androidify.wallpaper.Constants.TOP_Y;
 
 public class AndroidifyActivity extends ActionBarActivity {
 
@@ -49,50 +39,17 @@ public class AndroidifyActivity extends ActionBarActivity {
         ImageView view = (ImageView) findViewById(R.id.mainCanvas);
         Bitmap bitmap = Bitmap.createBitmap(500, 800, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
+        AndroidAnimation headTilt = android.getAnimation(AndroidAnimation.Type.HEAD_TILT);
+        AndroidAnimation nod = android.getAnimation(AndroidAnimation.Type.NOD);
+
+
         //canvas.scale(4, 2, 0, 0);
         //android.draw(canvas);
-        android.mHead.draw(canvas);
-        android.mBody.draw(canvas);
-        //android.mArm.draw(canvas);
-        android.mAntenna.draw(canvas);
-        android.mLegs.draw(canvas);
-        android.mFeet.draw(canvas);
-        android.workPaint.setColor(android.skinColor);
-        canvas.drawPath(android.armPath, android.workPaint);
-        canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-        android.mAntenna.draw(canvas);
-        canvas.drawPath(android.armPath, android.workPaint);
-        workPaint.setColor(Color.WHITE);
-        for (int i = 0; i < 2; i++) {
-            canvas.save();
-            if (i == 1) {
-                // Flip to right side
-                canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-            }
-            if (droidHead.scaleX < droidHead.scaleY) {
-                canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_LEFT_EYE.x, POINT_LEFT_EYE.y);
-            } else {
-                canvas.scale(droidHead.scaleY / droidHead.scaleX, 1f, POINT_LEFT_EYE.x, POINT_LEFT_EYE.y);
+        android.drawUpperPart(canvas, headTilt, nod);
 
-            }
-            boolean inBlink = false;
-            AndroidAnimation animation = getAnimation(AndroidAnimation.Type.BLINK);
-            if (animation != null) {
-                float progress = animation.getProgress();
-                if (progress < 0.25) {
-                    workRect.set(Float.MIN_VALUE, 4 * progress * EYE_HEIGHT + POINT_TOP_OF_LEFT_EYE.y, Float.MAX_VALUE, Float.MAX_VALUE);
-                    canvas.clipRect(workRect);
-                } else if (progress > 0.75) {
-                    workRect.set(Float.MIN_VALUE, 4 * (1 - progress) * EYE_HEIGHT + POINT_TOP_OF_LEFT_EYE.y, Float.MAX_VALUE, Float.MAX_VALUE);
-                    canvas.clipRect(workRect);
-                } else {
-                    inBlink = true;
-                }
-            }
-            if (!inBlink) {
-                canvas.drawCircle(POINT_LEFT_EYE.x, POINT_LEFT_EYE.y, POINT_LEFT_EYE.y - POINT_TOP_OF_LEFT_EYE.y, workPaint);
-//android.mHead.draw(canvas);
-
+        android.drawMiddlePart(canvas);
+        android.drawLowerPart(canvas);
+//
         view.setImageBitmap(bitmap);
         }
 

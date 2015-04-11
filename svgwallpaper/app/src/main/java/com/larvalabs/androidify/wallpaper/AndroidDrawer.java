@@ -48,16 +48,16 @@ public class AndroidDrawer {
     private HashMap<String, AndroidAnimation> animations;
 
     // The clothing vector graphics.
-    public Picture shirtBody = null;
-    public Picture shirtArm = null;
-    public Picture shirtTop = null;
-    public Picture pantsLeg = null;
-    public Picture pantsTop = null;
-    public Picture hairBack = null;
-    public Picture hairFront = null;
-    public Picture shoes = null;
-    public Picture glasses = null;
-    public Picture beard = null;
+    private Picture shirtBody = null;
+    private Picture shirtArm = null;
+    private Picture shirtTop = null;
+    private Picture pantsLeg = null;
+    private Picture pantsTop = null;
+    private Picture hairBack = null;
+    private Picture hairFront = null;
+    private Picture shoes = null;
+    private Picture glasses = null;
+    private Picture beard = null;
 
     /**
      * The accessories.
@@ -101,7 +101,7 @@ public class AndroidDrawer {
     private Picture antenna;
     // The path for drawing the arm (this is generated dynamically so as to keep the shoulders and hands round when
     // drawing the arm at different scales.
-    public Path armPath;
+    private Path armPath;
 
     // Size information for the view
     private float width, height, screenWidth;
@@ -110,9 +110,9 @@ public class AndroidDrawer {
     private RectF hairBounds = DEFAULT_HAIR_BOUNDS;
 
     private RectF workRect = new RectF();
-    public Paint workPaint;
+    private Paint workPaint;
 
-    public int skinColor;
+    private int skinColor;
 
     private int backgroundRed = 0XFF;
     private int backgroundGreen = 0XFF;
@@ -120,12 +120,6 @@ public class AndroidDrawer {
 
     private ZoomInfo zoom = null;
     private float driftAngle;
-    public final Picture mBody;
-    public final Picture mHead;
-    public final Picture mAntenna;
-    public final Picture mArm;
-    public final Picture mLegs;
-    public final Picture mFeet;
 
     /**
      * Sets the zoom information for this android drawer, which will also reset the drift animation.
@@ -149,19 +143,19 @@ public class AndroidDrawer {
      * @param db the database from which SVG assets can be loaded.
      */
     public AndroidDrawer(AssetDatabase db) {
-        mBody = db.getSVGForResource(R.raw.android_body).getPicture();
-        mHead = db.getSVGForResource(R.raw.android_head).getPicture();
-        mAntenna = db.getSVGForResource(R.raw.android_antenna).getPicture();
-        mArm = db.getSVGForResource(R.raw.android_arm).getPicture();
-        mLegs = db.getSVGForResource(R.raw.android_legs).getPicture();
-        mFeet = db.getSVGForResource(R.raw.android_feet).getPicture();
+        Picture body = db.getSVGForResource(R.raw.android_body).getPicture();
+        Picture head = db.getSVGForResource(R.raw.android_head).getPicture();
+        Picture antenna = db.getSVGForResource(R.raw.android_antenna).getPicture();
+        Picture arm = db.getSVGForResource(R.raw.android_arm).getPicture();
+        Picture legs = db.getSVGForResource(R.raw.android_legs).getPicture();
+        Picture feet = db.getSVGForResource(R.raw.android_feet).getPicture();
         // Load icons
-        this.feet = mFeet;
-        this.antenna = mAntenna;
-        droidBody = new Part(mBody);
-        droidHead = new Part(mHead);
-        droidArm = new Part(mArm);
-        droidLegs = new Part(mLegs);
+        this.feet = feet;
+        this.antenna = antenna;
+        droidBody = new Part(body);
+        droidHead = new Part(head);
+        droidArm = new Part(arm);
+        droidLegs = new Part(legs);
         droidBounds = new RectF();
         droidCenter = new PointF();
         // Setup body clip
@@ -223,6 +217,8 @@ public class AndroidDrawer {
         droidHead.picture = db.getSVGForResource(R.raw.android_head, ANDROID_COLOR, skinColor).getPicture();
         droidBody.picture = db.getSVGForResource(R.raw.android_body, ANDROID_COLOR, skinColor).getPicture();
         antenna = db.getSVGForResource(R.raw.android_antenna, ANDROID_COLOR, skinColor).getPicture();
+        feet = db.getSVGForResource(R.raw.android_feet, ANDROID_COLOR, skinColor).getPicture();
+        droidLegs.picture = db.getSVGForResource(R.raw.android_legs, ANDROID_COLOR, skinColor).getPicture();
         String hair = config.getHair();
         if (hair != null) {
             hairBack = getPicture(db.getSVGForAsset(ASSET_HAIR, hair, HAIR_BACK, HAIR_COLOR_DEFAULT, hairColor));
@@ -496,83 +492,202 @@ public class AndroidDrawer {
         }
         // Do regular transform
         canvas.concat(transform);
-        // Draw hair (behind)
-        {
+
+        drawUpperPart(canvas, headTilt, nod);
+
+        drawLowerPart(canvas);
+        drawBody(canvas);
+        drawArms(canvas);
+
+        drawShirt(canvas);
+        drawAccessories(canvas);
+        canvas.restore();
+    }
+
+    public void drawAccessories(Canvas canvas) {
+        // Draw shoulder accessory
+        for (int i = 0; i < 2; i++) {
             canvas.save();
-            if (headTilt != null) {
-                canvas.rotate(headTilt.getValue(), POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            if (i == 1) {
+                // Flip to right hand
+                canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
             }
-            if (nod != null) {
-                canvas.translate(0f, nod.getValue());
-            }
-            canvas.scale(droidHead.scaleX, droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
-            if (hairBack != null) {
-                hairBack.draw(canvas);
-            }
-            canvas.restore();
-        }
-        // Draw legs
-        {
-            canvas.save();
-            canvas.translate(droidLegs.offsetX, droidLegs.offsetY);
-            canvas.scale(droidLegs.scaleX, droidLegs.scaleY, POINT_BOTTOM_OF_BODY.x, POINT_BOTTOM_OF_BODY.y);
-            droidLegs.picture.draw(canvas);
-            canvas.restore();
-        }
-        {
-            canvas.save();
-            canvas.translate(droidLegs.offsetX, droidLegs.offsetY);
-            canvas.scale(droidLegs.scaleX, droidLegs.scaleY, POINT_BOTTOM_OF_BODY.x, POINT_BOTTOM_OF_BODY.y);
-            // Make feet and shoes proportional (fixed on the width of the legs)
-            // Draw feet
-            {
+            canvas.translate(droidArm.offsetX, droidArm.offsetY);
+            Picture shoulderAccessory = accessories.getPictureForType(i == 0 ? Accessory.TYPE_LEFT_SHOULDER : Accessory.TYPE_RIGHT_SHOULDER);
+            if (shoulderAccessory != null) {
                 canvas.save();
-                canvas.scale(1f, droidLegs.scaleX / droidLegs.scaleY, CENTER_X, POINT_CENTER_OF_LEFT_FOOT.y);
-                feet.draw(canvas);
+                // Scale proportionally
+                canvas.translate((POINT_LEFT_SHOULDER.x - POINT_LEFT_OF_LEFT_SHOULDER.x) * (droidArm.scaleX - 1), 0f);
+                canvas.scale(droidArm.scaleX, droidArm.scaleX, POINT_LEFT_SHOULDER.x, POINT_TOP_OF_LEFT_ARM.y);
+                shoulderAccessory.draw(canvas);
                 canvas.restore();
             }
-            // Draw pants
-            {
-                for (int i = 0; i < 2; i++) {
-                    canvas.save();
-                    if (i == 1) {
-                        canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-                    }
-                    if (pantsLeg != null) {
-                        pantsLeg.draw(canvas);
-                    }
-                    {
-                        canvas.save();
-                        canvas.scale(1f, droidLegs.scaleX / droidLegs.scaleY, (i == 0 ? POINT_TOP_OF_LEFT_LEG_CENTER.x : POINT_TOP_OF_RIGHT_LEG_CENTER.x), POINT_BOTTOM_OF_BODY.y);
-                        if (pantsTop != null) {
-                            pantsTop.draw(canvas);
-                        }
-                        canvas.restore();
-                    }
-                    canvas.restore();
+            canvas.restore();
+        }
+    }
+
+    public void drawFace(Canvas canvas, AndroidAnimation aHeadTilt, AndroidAnimation aNod) {
+        // Draw beard and hair in front, then glasses, then head accessory
+        {
+            Picture accessory = accessories.getPictureForType(Accessory.TYPE_HEAD);
+            Picture mouthAccessory = accessories.getPictureForType(Accessory.TYPE_MOUTH);
+            canvas.save();
+            if (aHeadTilt != null) {
+                canvas.rotate(aHeadTilt.getValue(), POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            }
+            if (aNod != null) {
+                canvas.translate(0f, aNod.getValue());
+            }
+            canvas.scale(droidHead.scaleX, droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            if (beard != null) {
+                canvas.save();
+                beard.draw(canvas);
+                canvas.restore();
+            }
+            if (hairFront != null) {
+                canvas.save();
+                hairFront.draw(canvas);
+                canvas.restore();
+            }
+            // Draw glasses
+            if (glasses != null) {
+                // Scale proportionately based on X
+                canvas.save();
+                canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_LEFT_EYE.y);
+                glasses.draw(canvas);
+                canvas.restore();
+            }
+            if (mouthAccessory != null) {
+                mouthAccessory.draw(canvas);
+            }
+            if (accessory != null) {
+                accessory.draw(canvas);
+            }
+            canvas.restore();
+        }
+    }
+
+    public void drawHead(Canvas canvas, AndroidAnimation aHeadTilt, AndroidAnimation aNod) {
+        // Draw head
+        {
+            Picture faceAccessory = accessories.getPictureForType(Accessory.TYPE_FACE);
+            canvas.save();
+            if (aHeadTilt != null) {
+                canvas.rotate(aHeadTilt.getValue(), POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            }
+            if (aNod != null) {
+                canvas.translate(0f, aNod.getValue());
+            }
+            canvas.scale(droidHead.scaleX, droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            droidHead.picture.draw(canvas);
+            Picture earring = accessories.getPictureForType(Accessory.TYPE_EARRING);
+            // Draw antennae
+            for (int i = 0; i < 2; i++) {
+                canvas.save();
+                if (i == 1) {
+                    canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
+                }
+                if (droidHead.scaleX > droidHead.scaleY) {
+                    canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
+                } else {
+                    canvas.scale(droidHead.scaleY / droidHead.scaleX, 1f, POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
+                }
+                AndroidAnimation animation = getAnimation(AndroidAnimation.Type.ANTENNA_TWITCH);
+                if (animation != null) {
+                    canvas.rotate(animation.getValue(), POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
+                } else {
+                    float wiggle = getAmbientAntennaAngle(i);
+                    canvas.rotate(wiggle, POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
+                }
+                antenna.draw(canvas);
+                if (earring != null) {
+                    earring.draw(canvas);
+                }
+                canvas.restore();
+            }
+            // Draw face accessory
+            if (faceAccessory != null) {
+                faceAccessory.draw(canvas);
+            }
+            // Draw eyes
+            workPaint.setColor(Color.WHITE);
+            for (int i = 0; i < 2; i++) {
+                canvas.save();
+                if (i == 1) {
+                    // Flip to right side
+                    canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
+                }
+                if (droidHead.scaleX < droidHead.scaleY) {
+                    canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_LEFT_EYE.x, POINT_LEFT_EYE.y);
+                } else {
+                    canvas.scale(droidHead.scaleY / droidHead.scaleX, 1f, POINT_LEFT_EYE.x, POINT_LEFT_EYE.y);
 
                 }
+                boolean inBlink = false;
+                AndroidAnimation animation = getAnimation(AndroidAnimation.Type.BLINK);
+                if (animation != null) {
+                    float progress = animation.getProgress();
+                    if (progress < 0.25) {
+                        workRect.set(Float.MIN_VALUE, 4 * progress * EYE_HEIGHT + POINT_TOP_OF_LEFT_EYE.y, Float.MAX_VALUE, Float.MAX_VALUE);
+                        canvas.clipRect(workRect);
+                    } else if (progress > 0.75) {
+                        workRect.set(Float.MIN_VALUE, 4 * (1 - progress) * EYE_HEIGHT + POINT_TOP_OF_LEFT_EYE.y, Float.MAX_VALUE, Float.MAX_VALUE);
+                        canvas.clipRect(workRect);
+                    } else {
+                        inBlink = true;
+                    }
+                }
+                if (!inBlink) {
+                    canvas.drawCircle(POINT_LEFT_EYE.x, POINT_LEFT_EYE.y, POINT_LEFT_EYE.y - POINT_TOP_OF_LEFT_EYE.y, workPaint);
+                }
+                canvas.restore();
             }
             canvas.restore();
         }
-        // Draw body
+    }
+
+    public void drawShoes(Canvas canvas) {
+        workPaint.setColor(skinColor);
+        // Draw shoes
         {
             canvas.save();
-            canvas.save(Canvas.MATRIX_SAVE_FLAG);
-            canvas.scale(droidBody.scaleX, droidBody.scaleY, POINT_TOP_OF_BODY.x, POINT_TOP_OF_BODY.y);
-            canvas.clipPath(bodyClip);
-            droidBody.picture.draw(canvas);
-            canvas.restore();
-            if (shirtBody != null) {
-                // Scale shirt body down if necessary
-                float scale = Math.max(droidBody.scaleX, droidBody.scaleY);
-                if (scale < 1.2f) {
-                    canvas.scale(scale / 1.2f, scale / 1.2f, POINT_TOP_OF_BODY.x, POINT_TOP_OF_BODY.y);
+            canvas.translate(droidLegs.offsetX, droidLegs.offsetY);
+            canvas.scale(droidLegs.scaleX, droidLegs.scaleY, POINT_BOTTOM_OF_BODY.x, POINT_BOTTOM_OF_BODY.y);
+            // Draw shoes
+            {
+                canvas.scale(1f, droidLegs.scaleX / droidLegs.scaleY, CENTER_X, POINT_CENTER_OF_LEFT_FOOT.y);
+                if (shoes != null) {
+                    shoes.draw(canvas);
+                    canvas.save();
+                    canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
+                    shoes.draw(canvas);
+                    canvas.restore();
                 }
-                shirtBody.draw(canvas);
             }
             canvas.restore();
         }
+    }
+
+    public void drawShirt(Canvas canvas) {
+        // Draw shirt top and body accessory
+        {
+            Picture accessory = accessories.getPictureForType(Accessory.TYPE_BODY);
+            // Now shirt top (scaled to body directly)
+            if (shirtTop != null || accessory != null) {
+                canvas.save();
+                canvas.scale(droidBody.scaleX, droidBody.scaleY, POINT_TOP_OF_BODY.x, POINT_TOP_OF_BODY.y);
+                if (shirtTop != null) {
+                    shirtTop.draw(canvas);
+                }
+                if (accessory != null) {
+                    accessory.draw(canvas);
+                }
+                canvas.restore();
+            }
+        }
+    }
+
+    public void drawArms(Canvas canvas) {
         // Draw arms
         {
             // If zooming, do special considerations here
@@ -671,176 +786,108 @@ public class AndroidDrawer {
                 canvas.restore();
             }
         }
+    }
 
-        // Draw head
+    public void drawBody(Canvas canvas) {
+        // Draw body
         {
-            Picture faceAccessory = accessories.getPictureForType(Accessory.TYPE_FACE);
             canvas.save();
-            if (headTilt != null) {
-                canvas.rotate(headTilt.getValue(), POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            canvas.save(Canvas.MATRIX_SAVE_FLAG);
+            canvas.scale(droidBody.scaleX, droidBody.scaleY, POINT_TOP_OF_BODY.x, POINT_TOP_OF_BODY.y);
+            canvas.clipPath(bodyClip);
+            droidBody.picture.draw(canvas);
+            canvas.restore();
+            if (shirtBody != null) {
+                // Scale shirt body down if necessary
+                float scale = Math.max(droidBody.scaleX, droidBody.scaleY);
+                if (scale < 1.2f) {
+                    canvas.scale(scale / 1.2f, scale / 1.2f, POINT_TOP_OF_BODY.x, POINT_TOP_OF_BODY.y);
+                }
+                shirtBody.draw(canvas);
             }
-            if (nod != null) {
-                canvas.translate(0f, nod.getValue());
-            }
-            canvas.scale(droidHead.scaleX, droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
-            droidHead.picture.draw(canvas);
-            Picture earring = accessories.getPictureForType(Accessory.TYPE_EARRING);
-            // Draw antennae
-            for (int i = 0; i < 2; i++) {
-                canvas.save();
-                if (i == 1) {
-                    canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-                }
-                if (droidHead.scaleX > droidHead.scaleY) {
-                    canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
-                } else {
-                    canvas.scale(droidHead.scaleY / droidHead.scaleX, 1f, POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
-                }
-                AndroidAnimation animation = getAnimation(AndroidAnimation.Type.ANTENNA_TWITCH);
-                if (animation != null) {
-                    canvas.rotate(animation.getValue(), POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
-                } else {
-                    float wiggle = getAmbientAntennaAngle(i);
-                    canvas.rotate(wiggle, POINT_BASE_OF_LEFT_ANTENNA.x, POINT_BASE_OF_LEFT_ANTENNA.y);
-                }
-                antenna.draw(canvas);
-                if (earring != null) {
-                    earring.draw(canvas);
-                }
-                canvas.restore();
-            }
-            // Draw face accessory
-            if (faceAccessory != null) {
-                faceAccessory.draw(canvas);
-            }
-            // Draw eyes
-    workPaint.setColor(Color.WHITE);
-            for (int i = 0; i < 2; i++) {
-                canvas.save();
-                if (i == 1) {
-                    // Flip to right side
-                    canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-                }
-                if (droidHead.scaleX < droidHead.scaleY) {
-                    canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_LEFT_EYE.x, POINT_LEFT_EYE.y);
-                } else {
-                    canvas.scale(droidHead.scaleY / droidHead.scaleX, 1f, POINT_LEFT_EYE.x, POINT_LEFT_EYE.y);
-
-                }
-                boolean inBlink = false;
-                AndroidAnimation animation = getAnimation(AndroidAnimation.Type.BLINK);
-                if (animation != null) {
-                    float progress = animation.getProgress();
-                    if (progress < 0.25) {
-                        workRect.set(Float.MIN_VALUE, 4 * progress * EYE_HEIGHT + POINT_TOP_OF_LEFT_EYE.y, Float.MAX_VALUE, Float.MAX_VALUE);
-                        canvas.clipRect(workRect);
-                    } else if (progress > 0.75) {
-                        workRect.set(Float.MIN_VALUE, 4 * (1 - progress) * EYE_HEIGHT + POINT_TOP_OF_LEFT_EYE.y, Float.MAX_VALUE, Float.MAX_VALUE);
-                        canvas.clipRect(workRect);
-                    } else {
-                        inBlink = true;
-                    }
-                }
-                if (!inBlink) {
-                    canvas.drawCircle(POINT_LEFT_EYE.x, POINT_LEFT_EYE.y, POINT_LEFT_EYE.y - POINT_TOP_OF_LEFT_EYE.y, workPaint);
-                }
-                canvas.restore();
-            }       }
             canvas.restore();
         }
-        // Draw shoes
+    }
+
+    public void drawLowerPart(Canvas canvas) {
+        workPaint.setColor(skinColor);
+        drawLegs(canvas);
         {
             canvas.save();
             canvas.translate(droidLegs.offsetX, droidLegs.offsetY);
             canvas.scale(droidLegs.scaleX, droidLegs.scaleY, POINT_BOTTOM_OF_BODY.x, POINT_BOTTOM_OF_BODY.y);
-            // Draw shoes
-            {
-                canvas.scale(1f, droidLegs.scaleX / droidLegs.scaleY, CENTER_X, POINT_CENTER_OF_LEFT_FOOT.y);
-                if (shoes != null) {
-                    shoes.draw(canvas);
-                    canvas.save();
+            // Make feet and shoes proportional (fixed on the width of the legs)
+
+            drawFeets(canvas);
+            drawPants(canvas);
+
+            canvas.restore();
+        }
+        drawShoes(canvas);
+    }
+
+    public void drawFeets(Canvas canvas) {
+        // Draw feet
+        {
+            canvas.save();
+            canvas.scale(1f, droidLegs.scaleX / droidLegs.scaleY, CENTER_X, POINT_CENTER_OF_LEFT_FOOT.y);
+            feet.draw(canvas);
+            canvas.restore();
+        }
+    }
+
+    private void drawPants(Canvas canvas) {
+        // Draw pants
+        {
+            for (int i = 0; i < 2; i++) {
+                canvas.save();
+                if (i == 1) {
                     canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-                    shoes.draw(canvas);
+                }
+                if (pantsLeg != null) {
+                    pantsLeg.draw(canvas);
+                }
+                {
+                    canvas.save();
+                    canvas.scale(1f, droidLegs.scaleX / droidLegs.scaleY, (i == 0 ? POINT_TOP_OF_LEFT_LEG_CENTER.x : POINT_TOP_OF_RIGHT_LEG_CENTER.x), POINT_BOTTOM_OF_BODY.y);
+                    if (pantsTop != null) {
+                        pantsTop.draw(canvas);
+                    }
                     canvas.restore();
                 }
+                canvas.restore();
+
             }
+        }
+    }
+
+    public void drawLegs(Canvas canvas) {
+        // Draw legs
+        {
+            canvas.save();
+            canvas.translate(droidLegs.offsetX, droidLegs.offsetY);
+            canvas.scale(droidLegs.scaleX, droidLegs.scaleY, POINT_BOTTOM_OF_BODY.x, POINT_BOTTOM_OF_BODY.y);
+            droidLegs.picture.draw(canvas);
             canvas.restore();
         }
-        // Draw shirt top and body accessory
+    }
+
+    public void drawHair(Canvas canvas, AndroidAnimation aHeadTilt, AndroidAnimation aNod) {
+        // Draw hair (behind)
         {
-            Picture accessory = accessories.getPictureForType(Accessory.TYPE_BODY);
-            // Now shirt top (scaled to body directly)
-            if (shirtTop != null || accessory != null) {
-                canvas.save();
-                canvas.scale(droidBody.scaleX, droidBody.scaleY, POINT_TOP_OF_BODY.x, POINT_TOP_OF_BODY.y);
-                if (shirtTop != null) {
-                    shirtTop.draw(canvas);
-                }
-                if (accessory != null) {
-                    accessory.draw(canvas);
-                }
-                canvas.restore();
-            }
-        }
-        // Draw beard and hair in front, then glasses, then head accessory
-        {
-            Picture accessory = accessories.getPictureForType(Accessory.TYPE_HEAD);
-            Picture mouthAccessory = accessories.getPictureForType(Accessory.TYPE_MOUTH);
             canvas.save();
-            if (headTilt != null) {
-                canvas.rotate(headTilt.getValue(), POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
+            if (aHeadTilt != null) {
+                canvas.rotate(aHeadTilt.getValue(), POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
             }
-            if (nod != null) {
-                canvas.translate(0f, nod.getValue());
+            if (aNod != null) {
+                canvas.translate(0f, aNod.getValue());
             }
             canvas.scale(droidHead.scaleX, droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_BOTTOM_OF_HEAD.y);
-            if (beard != null) {
-                canvas.save();
-                beard.draw(canvas);
-                canvas.restore();
-            }
-            if (hairFront != null) {
-                canvas.save();
-                hairFront.draw(canvas);
-                canvas.restore();
-            }
-            // Draw glasses
-            if (glasses != null) {
-                // Scale proportionately based on X
-                canvas.save();
-                canvas.scale(1f, droidHead.scaleX / droidHead.scaleY, POINT_BOTTOM_OF_HEAD.x, POINT_LEFT_EYE.y);
-                glasses.draw(canvas);
-                canvas.restore();
-            }
-            if (mouthAccessory != null) {
-                mouthAccessory.draw(canvas);
-            }
-            if (accessory != null) {
-                accessory.draw(canvas);
+            if (hairBack != null) {
+                hairBack.draw(canvas);
             }
             canvas.restore();
         }
-        // Draw shoulder accessory
-        for (int i = 0; i < 2; i++) {
-            canvas.save();
-            if (i == 1) {
-                // Flip to right hand
-                canvas.scale(-1f, 1f, CENTER_X, TOP_Y);
-            }
-            canvas.translate(droidArm.offsetX, droidArm.offsetY);
-            Picture shoulderAccessory = accessories.getPictureForType(i == 0 ? Accessory.TYPE_LEFT_SHOULDER : Accessory.TYPE_RIGHT_SHOULDER);
-            if (shoulderAccessory != null) {
-                canvas.save();
-                // Scale proportionally
-                canvas.translate((POINT_LEFT_SHOULDER.x - POINT_LEFT_OF_LEFT_SHOULDER.x) * (droidArm.scaleX - 1), 0f);
-                canvas.scale(droidArm.scaleX, droidArm.scaleX, POINT_LEFT_SHOULDER.x, POINT_TOP_OF_LEFT_ARM.y);
-                shoulderAccessory.draw(canvas);
-                canvas.restore();
-            }
-            canvas.restore();
-        }
-
-        canvas.restore();
     }
 
     /**
@@ -958,7 +1005,7 @@ public class AndroidDrawer {
 
     /**
      * Make the android wave.
-     * 
+     *
      * @return duration of animation in millis
      */
     public long addWaveAnimation() {
@@ -973,4 +1020,17 @@ public class AndroidDrawer {
         return duration;
     }
 
+
+    public void drawMiddlePart(Canvas aCanvas) {
+        drawAccessories(aCanvas);
+        drawArms(aCanvas);
+        drawBody(aCanvas);
+        drawShirt(aCanvas);
+    }
+
+    public void drawUpperPart(Canvas aCanvas, AndroidAnimation aHeadTilt, AndroidAnimation aNod) {
+        drawHair(aCanvas, aHeadTilt, aNod);
+        drawHead(aCanvas, aHeadTilt, aNod);
+        drawFace(aCanvas, aHeadTilt, aNod);
+    }
 }
