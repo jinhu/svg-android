@@ -77,7 +77,7 @@ public class AndroidDrawables {
         return bodies;
     }
 
-    public static List<Integer> getHeads() {
+    public static List<Integer>getHeads() {
         return heads;
     }
 
