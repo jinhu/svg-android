@@ -12,12 +12,13 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import android.widget.ImageView;
 
 import java.util.Random;
 
 import static android.service.wallpaper.WallpaperService.*;
 
 public class WallpaperActivity extends Activity {
-
+//ImageView view = new ImageVeiw();
     }
 

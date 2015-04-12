@@ -2,6 +2,8 @@ package com.larvalabs.androidify.wallpaper;
 
 import android.graphics.*;
 import android.view.animation.LinearInterpolator;
+
+import com.larvalabs.androidify.AndroidifyActivity;
 import com.larvalabs.svgandroid.SVG;
 import com.larvalabs.svgandroid.SVGParser;
 
@@ -465,43 +467,37 @@ public class AndroidDrawer {
      * @param canvas the canvas on which to draw the android.
      */
     public void draw(Canvas canvas) {
-        canvas.drawARGB(0xFF, backgroundRed, backgroundGreen, backgroundBlue);
-        int startCount = canvas.getSaveCount();
-        canvas.save();
-        // Only needed once for first draw
-        if (scaleFactor == -1f) {
-            rescale();
-        }
-        boolean animationsActive = !animations.isEmpty();
-        if (animationsActive) {
-            Iterator<AndroidAnimation> anims = animations.values().iterator();
-            while (anims.hasNext()) {
-
-                AndroidAnimation animation = anims.next();
-                if (animation.step()) {
-                    anims.remove();
-                }
-            }
-        }
+//        canvas.drawARGB(0xFF, backgroundRed, backgroundGreen, backgroundBlue);
+//        int startCount = canvas.getSaveCount();
+//        canvas.save();
+//        // Only needed once for first draw
+//        if (scaleFactor == -1f) {
+//            rescale();
+//        }
+//        boolean animationsActive = !animations.isEmpty();
+//        if (animationsActive) {
+//            Iterator<AndroidAnimation> anims = animations.values().iterator();
+//            while (anims.hasNext()) {
+//
+//                AndroidAnimation animation = anims.next();
+//                if (animation.step()) {
+//                    anims.remove();
+//                }
+//            }
+//        }
         AndroidAnimation headTilt = getAnimation(AndroidAnimation.Type.HEAD_TILT);
         AndroidAnimation nod = getAnimation(AndroidAnimation.Type.NOD);
-        // Do drift animation (if present)
-        AndroidAnimation drift = getAnimation(AndroidAnimation.Type.DRIFT);
-        if (drift != null) {
-            canvas.translate((float)(Math.cos(driftAngle) * drift.getValue()), (float)(Math.sin(driftAngle) * drift.getValue()));
-        }
-        // Do regular transform
-        canvas.concat(transform);
+//        // Do drift animation (if present)
+//        AndroidAnimation drift = getAnimation(AndroidAnimation.Type.DRIFT);
+//        if (drift != null) {
+//            canvas.translate((float)(Math.cos(driftAngle) * drift.getValue()), (float)(Math.sin(driftAngle) * drift.getValue()));
+//        }
+//        // Do regular transform
+//        canvas.concat(transform);
 
-        drawUpperPart(canvas, headTilt, nod);
+        drawAndroid(canvas, headTilt, nod);
 
-        drawLowerPart(canvas);
-        drawBody(canvas);
-        drawArms(canvas);
-
-        drawShirt(canvas);
-        drawAccessories(canvas);
-        canvas.restore();
+  //      canvas.restore();
     }
 
     public void drawAccessories(Canvas canvas) {
@@ -1032,5 +1028,11 @@ public class AndroidDrawer {
         drawHair(aCanvas, aHeadTilt, aNod);
         drawHead(aCanvas, aHeadTilt, aNod);
         drawFace(aCanvas, aHeadTilt, aNod);
+    }
+
+    public void drawAndroid(Canvas aCanvas, AndroidAnimation aHeadTilt, AndroidAnimation aNod) {
+        drawUpperPart(aCanvas, aHeadTilt, aNod);
+        drawMiddlePart(aCanvas);
+        drawLowerPart(aCanvas);
     }
 }

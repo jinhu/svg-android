@@ -1,5 +1,19 @@
 package com.larvalabs.androidify;
 
+import android.app.Activity;
+import android.graphics.Canvas;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+
+import com.larvalabs.androidify.wallpaper.AndroidDrawer;
+import com.larvalabs.androidify.wallpaper.AssetDatabase;
+
+import java.util.Random;
+
+
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -9,7 +23,9 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.widget.ImageView;
 
 import com.larvalabs.androidify.wallpaper.AndroidAnimation;
@@ -21,37 +37,69 @@ import com.larvalabs.androidify.wallpaper.ZoomInfo;
 
 import java.util.Random;
 
-public class AndroidifyActivity extends ActionBarActivity {
+public class AndroidifyActivity extends Activity implements SurfaceHolder.Callback {
 
+    /** Called when the activity is first created. */
     @Override
-
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_androidify);
+
+        SurfaceView view = new SurfaceView(this);
+        setContentView(view);
+        mSurfaceHolder=view.getHolder();
+        mSurfaceHolder.addCallback(this);
         assetDatabase = new AssetDatabase(getAssets(), getResources());
         android = new AndroidDrawer(assetDatabase);
         nextAndroid = new AndroidDrawer(assetDatabase);
 
-        android.setAndroidConfig(getNextConfig(), assetDatabase);
+        android.setAndroidConfig(assetDatabase.getRandomConfig(), assetDatabase);
         android.setBackgroundColor(getNextColor());
         android.setZoom(createRandomZoomInfo());
         sceneTime = System.currentTimeMillis();
-        ImageView view = (ImageView) findViewById(R.id.mainCanvas);
-        Bitmap bitmap = Bitmap.createBitmap(500, 800, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        AndroidAnimation headTilt = android.getAnimation(AndroidAnimation.Type.HEAD_TILT);
-        AndroidAnimation nod = android.getAnimation(AndroidAnimation.Type.NOD);
 
+//        //postDraw();
+//        }
 
-        //canvas.scale(4, 2, 0, 0);
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        tryDrawing(holder);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int frmt, int w, int h) {
+        tryDrawing(holder);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {}
+
+    private void tryDrawing(SurfaceHolder holder) {
+        Log.i(TAG, "Trying to draw...");
+
+//        Canvas canvas = holder.lockCanvas();
+//        if (canvas == null) {
+//            Log.e(TAG, "Cannot draw onto the canvas as it's null");
+//        } else {
+//            drawMyStuff(canvas);
+//            holder.unlockCanvasAndPost(canvas);
+//        }
+        drawFrame();
+    }
+
+    private void drawMyStuff(final Canvas canvas) {
+        Random random = new Random();
+        Log.i(TAG, "Drawing...");
+        canvas.drawRGB(255, 128, 128);
         //android.draw(canvas);
-        android.drawUpperPart(canvas, headTilt, nod);
+        drawFrame();
 
-        android.drawMiddlePart(canvas);
-        android.drawLowerPart(canvas);
-//
-        view.setImageBitmap(bitmap);
-        }
+    }
+    private Canvas mCanvas;
+    private SurfaceHolder mSurfaceHolder;
+    private String TAG ="androidify";
+
 
 
     private static final Random RANDOM = new Random();
@@ -146,57 +194,57 @@ public class AndroidifyActivity extends ActionBarActivity {
     private float targetSlideX;
     private long lastSlideTime;
 
-    // Gesture detector to detect single taps.
-    private GestureDetector.OnGestureListener gestureListener = new GestureDetector.OnGestureListener() {
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return false;
-        }
-
-        @Override
-        public void onShowPress(MotionEvent e) {
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            doTap(e);
-            return true;
-        }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            return false;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            return false;
-        }
-    };
-
-    GestureDetector mGestureDetector = new GestureDetector(gestureListener);
+//    // Gesture detector to detect single taps.
+//    private GestureDetector.OnGestureListener gestureListener = new GestureDetector.OnGestureListener() {
+//        @Override
+//        public boolean onDown(MotionEvent e) {
+//            return false;
+//        }
+//
+//        @Override
+//        public void onShowPress(MotionEvent e) {
+//        }
+//
+//        @Override
+//        public boolean onSingleTapUp(MotionEvent e) {
+//            doTap(e);
+//            return true;
+//        }
+//
+//        @Override
+//        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+//            return false;
+//        }
+//
+//        @Override
+//        public void onLongPress(MotionEvent e) {
+//        }
+//
+//        @Override
+//        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+//            return false;
+//        }
+//    };
+//
+//    GestureDetector mGestureDetector = new GestureDetector(gestureListener);
 
     private final Runnable drawer = new Runnable() {
         public void run() {
             drawFrame();
         }
     };
-
-    /**
-     * Gets a randomly-generated android.
-     */
-    private AndroidConfig getNextConfig() {
-        // Return a random config
-        return assetDatabase.getRandomConfig();
-    }
-
-    /**
-     * Gets a random background color, ensuring it isn't the same as the last color.
-     */
+//
+//    /**
+//     * Gets a randomly-generated android.
+//     */
+//    private AndroidConfig getNextConfig() {
+//        // Return a random config
+//        return assetDatabase.getRandomConfig();
+//    }
+//
+//    /**
+//     * Gets a random background color, ensuring it isn't the same as the last color.
+//     */
     private int getNextColor() {
         int index;
         do {
@@ -225,70 +273,47 @@ public class AndroidifyActivity extends ActionBarActivity {
                 driftAngle
         );
     }
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mHandler.removeCallbacks(drawer);
-    }
-
-    public void onVisibilityChanged(boolean visible) {
-        mVisible = visible;
-        if (visible) {
-            postDraw();
-        } else {
-            mHandler.removeCallbacks(drawer);
-        }
-    }
-
-    public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        //super.onSurfaceChanged(holder, format, width, height);
-        maxWidth = Math.max(width, height) * SCENE_WIDTH / 100;
-        this.width = width;
-        this.height = height;
-        android.setScreenWidth(width);
-        nextAndroid.setScreenWidth(width);
-        android.setDimensions(maxWidth, height);
-        nextAndroid.setDimensions(maxWidth, height);
-        postDraw();
-    }
-
-    public void onSurfaceCreated(SurfaceHolder holder) {
-        //super.onSurfaceCreated(holder);
-    }
-
-    public void onSurfaceDestroyed(SurfaceHolder holder) {
-        //super.onSurfaceDestroyed(holder);
-        mVisible = false;
-        mHandler.removeCallbacks(drawer);
-    }
-
-    public void onOffsetsChanged(float xOffset, float yOffset, float xStep, float yStep, int xPixels, int yPixels) {
-        this.yOffset = 0;
-        targetSlideX = xOffset * (width - maxWidth);
-        if (this.xOffset == Float.MIN_VALUE) {
-            this.xOffset = targetSlideX;
-        }
-        lastSlideTime = System.currentTimeMillis();
-        //Log.d("!", "xOffset: " + xOffset + ", yOffset: " + yOffset);
-        //Log.d("!", "xStep: " + xStep + ", yStep: " + yStep);
-        //Log.d("!", "xPixels: " + xPixels + ", yPixels: " + yPixels);
-        postDraw();
-    }
-
-    /*
-     * Store the position of the touch event so we can use it for drawing later
-     */
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        mGestureDetector.onTouchEvent(event);
-        return true;
-    }
-
-    private void doTap(MotionEvent e) {
-        Log.d("ANDROIDIFY WALLPAPER", "Screen tapped.");
-        android.addRandomAnimation(false);
-    }
-
+////    @Override
+////    public void onDestroy() {
+////        super.onDestroy();
+////        mHandler.removeCallbacks(drawer);
+////    }
+////
+////    public void onVisibilityChanged(boolean visible) {
+////        mVisible = visible;
+////        if (visible) {
+////            postDraw();
+////        } else {
+////            mHandler.removeCallbacks(drawer);
+////        }
+////    }
+//    public void onOffsetsChanged(float xOffset, float yOffset, float xStep, float yStep, int xPixels, int yPixels) {
+//        this.yOffset = 0;
+//        targetSlideX = xOffset * (width - maxWidth);
+//        if (this.xOffset == Float.MIN_VALUE) {
+//            this.xOffset = targetSlideX;
+//        }
+//        lastSlideTime = System.currentTimeMillis();
+//        //Log.d("!", "xOffset: " + xOffset + ", yOffset: " + yOffset);
+//        //Log.d("!", "xStep: " + xStep + ", yStep: " + yStep);
+//        //Log.d("!", "xPixels: " + xPixels + ", yPixels: " + yPixels);
+//        //postDraw();
+//    }
+//
+//    /*
+//     * Store the position of the touch event so we can use it for drawing later
+//     */
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        mGestureDetector.onTouchEvent(event);
+//        return true;
+//    }
+//
+//    private void doTap(MotionEvent e) {
+//        Log.d("ANDROIDIFY WALLPAPER", "Screen tapped.");
+//        android.addRandomAnimation(false);
+//    }
+//
     /*
      * Draw one frame of the animation. This method gets called repeatedly
      * by posting a delayed Runnable. You can do any drawing you want in
@@ -318,7 +343,7 @@ public class AndroidifyActivity extends ActionBarActivity {
                 transitionMode = false;
             } else {
                 if (!transitionMode) {
-                    nextAndroid.setAndroidConfig(getNextConfig(), assetDatabase);
+                    nextAndroid.setAndroidConfig(assetDatabase.getRandomConfig(), assetDatabase);
                     nextAndroid.setBackgroundColor(getNextColor());
                     // todo - randomize
                     nextAndroid.setZoom(createRandomZoomInfo());
@@ -329,7 +354,7 @@ public class AndroidifyActivity extends ActionBarActivity {
 
             }
         }
-        final SurfaceHolder holder = getSurfaceHolder();
+        final SurfaceHolder holder = getHolder();
         final Rect frame = holder.getSurfaceFrame();
 //            final int width = frame.width();
 //            final int height = frame.height();
@@ -368,8 +393,8 @@ public class AndroidifyActivity extends ActionBarActivity {
 
     }
 
-    private SurfaceHolder getSurfaceHolder() {
-        return null;
+    private SurfaceHolder getHolder() {
+        return mSurfaceHolder;
     }
 
     /**
@@ -377,9 +402,28 @@ public class AndroidifyActivity extends ActionBarActivity {
      */
     private void postDraw() {
         mHandler.removeCallbacks(drawer);
-        if (mVisible) {
+        //if (mVisible) {
             mHandler.postDelayed(drawer, 1000 / FRAME_RATE);
-        }
+        //}
     }
+
+////    public void onSurfaceDestroyed(SurfaceHolder holder) {
+////
+// super.onSurfaceDestroyed(holder);
+////        mVisible = false;
+////        mHandler.removeCallbacks(drawer);
+////    }
+////    public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+////        //super.onSurfaceChanged(holder, format, width, height);
+////        maxWidth = Math.max(width, height) * SCENE_WIDTH / 100;
+////        this.width = width;
+////        this.height = height;
+////        android.setScreenWidth(width);
+////        nextAndroid.setScreenWidth(width);
+////        android.setDimensions(maxWidth, height);
+////        nextAndroid.setDimensions(maxWidth, height);
+////        postDraw();
+////    }
+////
 
 }
